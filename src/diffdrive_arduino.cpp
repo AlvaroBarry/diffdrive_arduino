@@ -5,16 +5,19 @@
 
 
 
+
 DiffDriveArduino::DiffDriveArduino()
     : logger_(rclcpp::get_logger("DiffDriveArduino"))
 {}
 
 
-hardware_interface::CallbackReturn DiffDriveArduino::on_init(const hardware_interface::HardwareInfo & info)
+
+
+
+return_type DiffDriveArduino::configure(const hardware_interface::HardwareInfo & info)
 {
-  if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS)
-  {
-    return CallbackReturn::ERROR;
+  if (configure_default(info) != return_type::OK) {
+    return return_type::ERROR;
   }
 
   RCLCPP_INFO(logger_, "Configuring...");
@@ -42,7 +45,8 @@ hardware_interface::CallbackReturn DiffDriveArduino::on_init(const hardware_inte
 
   RCLCPP_INFO(logger_, "Finished Configuration");
 
-  return CallbackReturn::SUCCESS;
+  status_ = hardware_interface::status::CONFIGURED;
+  return return_type::OK;
 }
 
 std::vector<hardware_interface::StateInterface> DiffDriveArduino::export_state_interfaces()
@@ -78,7 +82,7 @@ std::vector<hardware_interface::CommandInterface> DiffDriveArduino::export_comma
 }
 
 
-hardware_interface::CallbackReturn DiffDriveArduino::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
+return_type DiffDriveArduino::start()
 {
   RCLCPP_INFO(logger_, "Starting Controller...");
 
@@ -87,18 +91,20 @@ hardware_interface::CallbackReturn DiffDriveArduino::on_activate(const rclcpp_li
   // arduino.setPidValues(14,7,0,100);
   arduino_.setPidValues(30, 20, 0, 100);
 
-  return CallbackReturn::SUCCESS;
+  status_ = hardware_interface::status::STARTED;
+
+  return return_type::OK;
 }
 
-hardware_interface::CallbackReturn DiffDriveArduino::on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/)
+return_type DiffDriveArduino::stop()
 {
   RCLCPP_INFO(logger_, "Stopping Controller...");
+  status_ = hardware_interface::status::STOPPED;
 
-  return CallbackReturn::SUCCESS;
+  return return_type::OK;
 }
 
-hardware_interface::return_type DiffDriveArduino::read(
-  const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+hardware_interface::return_type DiffDriveArduino::read()
 {
 
   // TODO fix chrono duration
@@ -136,8 +142,7 @@ hardware_interface::return_type DiffDriveArduino::read(
   
 }
 
-hardware_interface::return_type DiffDriveArduino::write(
-  const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+hardware_interface::return_type DiffDriveArduino::write()
 {
 
   if (!arduino_.connected())
